@@ -1,0 +1,1705 @@
+<!doctype html>
+<html lang="th">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบเช็คเวลาเรียน (Firebase)</title>
+  
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  
+  <style>
+        /* CSS Styles remain the same, removing unnecessary SDK styles if they existed */
+        /* (The original extensive CSS is kept for styling) */
+        
+        body {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f8fafc;
+            min-height: 100%;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: calc(100% - 60px);
+        }
+
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 24px;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: translateY(-2px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #666;
+            margin: 10px 0 0 0;
+            font-size: 1.1rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #e1e5e9;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .nav-tabs {
+            display: flex;
+            border-bottom: 2px solid #e1e5e9;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav-tab {
+            padding: 15px 25px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tab.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 28px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.3);
+        }
+
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .stat-card p {
+            margin: 0;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .table th,
+        .table td {
+            padding: 16px 20px;
+            text-align: left;
+            border-bottom: 1px solid #f1f5f9;
+            word-wrap: break-word;
+            max-width: 200px;
+        }
+
+        .table th {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            font-weight: 700;
+            color: #374151;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        .table tbody tr:hover {
+            background: #f8fafc;
+            transform: scale(1.01);
+        }
+
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 16px;
+        }
+
+        .mobile-card {
+            display: none;
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+        }
+
+        .mobile-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .mobile-card-title {
+            font-weight: 700;
+            color: #1f2937;
+            font-size: 16px;
+        }
+
+        .mobile-card-content {
+            display: grid;
+            gap: 12px;
+        }
+
+        .mobile-card-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .mobile-card-row:last-child {
+            border-bottom: none;
+        }
+
+        .mobile-card-label {
+            font-weight: 600;
+            color: #6b7280;
+            font-size: 14px;
+            min-width: 80px;
+        }
+
+        .mobile-card-value {
+            color: #1f2937;
+            font-size: 14px;
+            flex: 1;
+            text-align: right;
+        }
+
+        .mobile-actions {
+            margin-top: 16px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: white;
+            font-size: 14px;
+            margin-top: 40px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .col {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .subject-list {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .subject-item {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            margin: 4px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .subject-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .subject-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .subject-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .subject-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+
+        .subject-card.warning::before {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .subject-card.danger::before {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .subject-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .subject-code {
+            font-size: 14px;
+            font-weight: 600;
+            color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+            padding: 4px 12px;
+            border-radius: 12px;
+        }
+
+        .subject-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 8px 0;
+            line-height: 1.4;
+        }
+
+        .subject-teacher {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 16px;
+        }
+
+        .subject-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 12px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        .status-normal {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .nav-tabs {
+                overflow-x: auto;
+            }
+
+            .nav-tab {
+                white-space: nowrap;
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+
+            .row {
+                flex-direction: column;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .table-responsive {
+                display: none;
+            }
+
+            .mobile-card {
+                display: block;
+            }
+
+            .table th,
+            .table td {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+
+            .btn {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+
+            .btn-sm {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            .subject-cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .mobile-card-value {
+                text-align: left;
+                margin-top: 4px;
+            }
+
+            .mobile-card-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="container"><div id="authScreen" class="card">
+    <div class="header">
+     <h1 id="systemTitle">ระบบเช็คเวลาเรียน</h1>
+     <p id="schoolName">โรงเรียน</p>
+    </div>
+    <div class="nav-tabs"><button class="nav-tab active" onclick="showAuthTab('login')">เข้าสู่ระบบ</button> <button class="nav-tab" onclick="showAuthTab('register')">สมัครสมาชิก</button>
+    </div><div id="loginTab" class="tab-content active">
+     <form id="loginForm">
+      <div class="form-group"><label for="loginEmail">อีเมล</label> <input type="email" id="loginEmail" class="form-control" required>
+      </div>
+      <div class="form-group"><label for="loginPassword">รหัสผ่าน</label> <input type="password" id="loginPassword" class="form-control" required>
+      </div><button type="submit" class="btn btn-primary" style="width: 100%;">เข้าสู่ระบบ</button>
+     </form>
+    </div><div id="registerTab" class="tab-content">
+     <form id="registerForm">
+      <div class="form-group"><label for="registerName">ชื่อ-นามสกุล</label> <input type="text" id="registerName" class="form-control" required>
+      </div>
+      <div class="form-group"><label for="registerEmail">อีเมล</label> <input type="email" id="registerEmail" class="form-control" required>
+      </div>
+      <div class="form-group"><label for="registerPassword">รหัสผ่าน</label> <input type="password" id="registerPassword" class="form-control" required>
+      </div><button type="submit" class="btn btn-primary" style="width: 100%;">สมัครสมาชิก</button>
+     </form>
+     <div class="alert alert-info" style="margin-top: 20px;"><strong>หมายเหตุ:</strong> การสมัครสมาชิกต้องได้รับการอนุมัติจากผู้ดูแลระบบก่อน
+     </div>
+    </div>
+   </div><div id="mainScreen" class="hidden"><div class="card">
+     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+      <div>
+       <h2 id="welcomeText">ยินดีต้อนรับ</h2>
+       <p id="userRole">นักเรียน</p>
+      </div><button class="btn btn-secondary" onclick="logout()">ออกจากระบบ</button>
+     </div>
+    </div><div class="card">
+     <div class="nav-tabs" id="mainNavTabs"><button class="nav-tab active" onclick="showMainTab('dashboard')">แดชบอร์ด</button> <button class="nav-tab" onclick="showMainTab('addLeave')">เพิ่มข้อมูลการลา</button> <button class="nav-tab" onclick="showMainTab('manageLeave')">จัดการข้อมูลการลา</button>
+     </div><div id="dashboardTab" class="tab-content active">
+      <div class="stats-grid" id="statsGrid"></div>
+      <h3 style="margin-bottom: 24px; color: #1f2937; font-weight: 700;">สถิติการลาแยกตามวิชา</h3>
+      <div id="subjectCardsContainer" class="subject-cards-grid"></div>
+     </div><div id="addLeaveTab" class="tab-content">
+      <div class="card" style="margin: 0; padding: 32px;">
+       <div class="header" style="margin-bottom: 30px;">
+        <h2 style="color: #1f2937; font-size: 1.8rem; margin: 0;">เพิ่มข้อมูลการลา</h2>
+        <p style="color: #6b7280; margin: 8px 0 0 0;">กรอกข้อมูลการลาเรียนของคุณ</p>
+       </div>
+       <form id="addLeaveForm">
+        <div class="row">
+         <div class="col">
+          <div class="form-group"><label for="leaveDate">📅 วันที่ลา</label> <input type="date" id="leaveDate" class="form-control" required>
+          </div>
+         </div>
+         <div class="col">
+          <div class="form-group"><label for="leaveReason">📝 เหตุผลการลา</label> <select id="leaveReason" class="form-control" required> <option value="">เลือกเหตุผล</option> <option value="ลาป่วย">🤒 ลาป่วย</option> <option value="ลากิจ">📋 ลากิจ</option> <option value="กิจกรรม">🎯 กิจกรรม</option> </select>
+          </div>
+         </div>
+        </div>
+        <div id="subjectsOnDate" class="hidden" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); padding: 24px; border-radius: 16px; margin: 20px 0; border: 1px solid #e2e8f0;">
+         <h4 style="color: #1f2937; margin: 0 0 16px 0; font-size: 1.2rem; display: flex; align-items: center;">📚 วิชาที่เรียนในวันนี้:</h4>
+         <div id="subjectsList"></div>
+        </div><button type="submit" class="btn btn-primary" style="width: 100%; padding: 18px; font-size: 18px; margin-top: 20px;"> 💾 บันทึกข้อมูลการลา </button>
+       </form>
+      </div>
+     </div><div id="manageLeaveTab" class="tab-content">
+      <div class="card" style="margin: 0; padding: 32px;">
+       <div class="header" style="margin-bottom: 30px;">
+        <h2 style="color: #1f2937; font-size: 1.8rem; margin: 0;">📋 จัดการข้อมูลการลา</h2>
+        <p style="color: #6b7280; margin: 8px 0 0 0;">ประวัติการลาเรียนของคุณ</p>
+       </div>
+       <div class="table-responsive">
+        <table class="table" id="leaveHistoryTable">
+         <thead>
+          <tr>
+           <th>📅 วันที่ลา</th>
+           <th>📝 เหตุผล</th>
+           <th>📚 วิชาที่เรียน</th>
+           <th>⚙️ การจัดการ</th>
+          </tr>
+         </thead>
+         <tbody></tbody>
+        </table>
+       </div>
+       <div id="leaveHistoryMobile" class="mobile-cards-container"></div>
+      </div>
+     </div><div id="adminUsersTab" class="tab-content">
+      <div class="card" style="margin: 0; padding: 32px;">
+       <div class="header" style="margin-bottom: 30px;">
+        <h2 style="color: #1f2937; font-size: 1.8rem; margin: 0;">👥 จัดการสมาชิก</h2>
+        <p style="color: #6b7280; margin: 8px 0 0 0;">รายชื่อสมาชิกและการอนุมัติ</p>
+       </div>
+       <div class="table-responsive">
+        <table class="table" id="usersTable">
+         <thead>
+          <tr>
+           <th>👤 ชื่อ</th>
+           <th>📧 อีเมล</th>
+           <th>✅ สถานะ</th>
+           <th>⚙️ การจัดการ</th>
+          </tr>
+         </thead>
+         <tbody></tbody>
+        </table>
+       </div>
+       <div id="usersMobile" class="mobile-cards-container"></div>
+      </div>
+     </div>
+     <div id="adminUserDetailTab" class="tab-content">
+      <div class="card" style="margin: 0; padding: 32px;">
+       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 16px;">
+        <div>
+         <h2 id="userDetailName" style="color: #1f2937; font-size: 1.8rem; margin: 0;">👤 รายละเอียดผู้ใช้</h2>
+         <p style="color: #6b7280; margin: 8px 0 0 0;">ข้อมูลและสถิติการเรียนของนักเรียน</p>
+        </div><button class="btn btn-secondary" onclick="showMainTab('adminUsers')" style="display: flex; align-items: center; gap: 8px;"> ← กลับ </button>
+       </div>
+       <div class="stats-grid" id="userDetailStats" style="margin-bottom: 40px;"></div>
+       <div style="margin-bottom: 20px;">
+        <h3 style="color: #1f2937; font-size: 1.4rem; margin: 0; display: flex; align-items: center; gap: 8px;">📋 ประวัติการลา</h3>
+       </div>
+       <div class="table-responsive">
+        <table class="table" id="userDetailLeaveTable">
+         <thead>
+          <tr>
+           <th>📅 วันที่ลา</th>
+           <th>📝 เหตุผล</th>
+           <th>📚 วิชาที่เรียน</th>
+           <th>⚙️ การจัดการ</th>
+          </tr>
+         </thead>
+         <tbody></tbody>
+        </table>
+       </div>
+       <div id="userDetailLeaveMobile" class="mobile-cards-container"></div>
+      </div>
+     </div>
+    </div>
+   </div><div id="loadingScreen" class="card hidden">
+    <div class="loading">
+     <div class="spinner"></div>
+     <p>กำลังโหลด...</p>
+    </div>
+   </div><div id="alertContainer"></div>
+  </div>
+  <div class="footer">
+   © Nattapong Khawnuy | นายณัฐพงศ์ ขาวนุ้ย
+  </div>
+  <script>
+        // 2. กำหนดค่า Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJrWTRCQZ54LQX8fCUGcFd0yNZ0DkiE94",
+            authDomain: "check-class-553d3.firebaseapp.com",
+            projectId: "check-class-553d3",
+            storageBucket: "check-class-553d3.firebasestorage.app",
+            messagingSenderId: "932319024535",
+            appId: "1:932319024535:web:b60603df4c2e3523eee0d2",
+            measurementId: "G-HFR3F194RK"
+        };
+
+        // 3. เริ่มต้น Firebase และสร้างตัวแปรอ้างอิง
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = app.auth();
+        const db = app.firestore();
+        const usersCol = db.collection('users');
+        const leavesCol = db.collection('leaves');
+        const ADMIN_EMAIL = 'nattapongkha838@gmail.com'; // ผู้ดูแลระบบ
+        
+        // Global variables
+        let currentUser = null; // Firebase User Object
+        let currentUserData = null; // Firestore User Data
+        let allUsersData = [];
+        let allLeaveRecords = [];
+        let selectedUserId = null;
+
+        // Subject data (kept as is)
+        const subjects = {
+            'ค33102': { name: 'คณิตศาสตร์ 6', type: 'พื้นฐาน', credits: 1, periods: 2, teacher: 'ละเมิล' },
+            'ท33102': { name: 'ภาษาไทย 6', type: 'พื้นฐาน', credits: 1, periods: 2, teacher: 'สุชานาฏ' },
+            'ว30101': { name: 'วิทยาศาสตร์ชีวภาพ', type: 'พื้นฐาน', credits: 1.5, periods: 3, teacher: 'รัตนวรรณ' },
+            'ว30102': { name: 'วิทยาศาสตร์กายภาพ (เคมี)', type: 'พื้นฐาน', credits: 1.5, periods: 3, teacher: 'เมริน' },
+            'ว30103': { name: 'วิทยาศาสตร์กายภาพ (ฟิสิกส์1)', type: 'พื้นฐาน', credits: 1, periods: 2, teacher: 'ปทุมรัตน์' },
+            'ว30104': { name: 'วิทยาศาสตร์กายภาพ (ฟิสิกส์ 2)', type: 'พื้นฐาน', credits: 1, periods: 2, teacher: 'ปทุมรัตน์' },
+            'ส33102': { name: 'สังคมศึกษา ศาสนา และวัฒนธรรม 6', type: 'พื้นฐาน', credits: 1, periods: 2, teacher: 'เรืองรัตน์' },
+            'อ33102': { name: 'ภาษาอังกฤษ 6', type: 'พื้นฐาน', credits: 1, periods: 2, teacher: 'ณัฐนิชาช์' },
+            'ค33202': { name: 'คณิตศาสตร์เพิ่มเติม 6', type: 'เพิ่มเติม', credits: 2, periods: 4, teacher: 'ละเมิล' },
+            'พ33201': { name: 'พลศึกษา3', type: 'เพิ่มเติม', credits: 0.5, periods: 1, teacher: 'สุรวัฒน์' },
+            'ส33230': { name: 'หน้าที่พลเมือง 4', type: 'เพิ่มเติม', credits: 0.5, periods: 1, teacher: 'รัตนวรรณ, สุรวัฒน์' },
+            'ส33286': { name: 'การป้องกันการทุจริต 2', type: 'เพิ่มเติม', credits: 0.5, periods: 1, teacher: 'รัตนวรรณ, สุรวัฒน์' },
+            'อ33202': { name: 'ภาษาอังกฤษเพื่อการศึกษาต่อ', type: 'เพิ่มเติม', credits: 1, periods: 2, teacher: 'สุเจน' },
+            'ก33904': { name: 'กิจกรรมแนะแนว', type: 'กิจกรรม', credits: 0, periods: 1, teacher: 'ยุทธการ' },
+            'ชุมนุม': { name: 'ชุมนุม', type: 'กิจกรรม', credits: 0, periods: 1, teacher: '' }
+        };
+
+        // Schedule data (kept as is)
+        const schedule = {
+            'monday': ['ว30101', 'ว30101', 'พ33201', 'ค33202', 'ว30102', 'ว30102', 'ชุมนุม'],
+            'tuesday': ['ค33202', 'ค33202', 'ท33102', 'อ33202', 'ก33904'],
+            'wednesday': ['ส33102', 'ค33102', 'ส33286', 'อ33102', 'ว30103', 'ว30103'],
+            'thursday': ['ว30104', 'ว30104', 'ส33102', 'ว30102', 'ค33202'],
+            'friday': ['ท33102', 'อ33202', 'ค33102', 'อ33102', 'ว30101']
+        };
+
+        // 4. Firebase Listener/Data Fetching
+        function subscribeToData() {
+            // ฟังการเปลี่ยนแปลงของข้อมูลผู้ใช้ทั้งหมด
+            usersCol.onSnapshot(snapshot => {
+                allUsersData = snapshot.docs.map(doc => ({ 
+                    id: doc.id, 
+                    ...doc.data() 
+                }));
+                // อัพเดทข้อมูลผู้ใช้ปัจจุบัน หากมีการเปลี่ยนแปลง
+                if (currentUser) {
+                    currentUserData = allUsersData.find(u => u.id === currentUser.uid);
+                }
+                updateUI();
+            }, error => {
+                console.error("Error fetching users:", error);
+                showAlert('เกิดข้อผิดพลาดในการดึงข้อมูลผู้ใช้', 'danger');
+            });
+
+            // ฟังการเปลี่ยนแปลงของข้อมูลการลาทั้งหมด
+            leavesCol.onSnapshot(snapshot => {
+                allLeaveRecords = snapshot.docs.map(doc => ({ 
+                    id: doc.id, 
+                    ...doc.data() 
+                }));
+                updateUI();
+            }, error => {
+                console.error("Error fetching leaves:", error);
+                showAlert('เกิดข้อผิดพลาดในการดึงข้อมูลการลา', 'danger');
+            });
+        }
+
+        // Initialize app (ใช้ onAuthStateChanged แทน initApp เดิม)
+        async function initApp() {
+            showLoading(true);
+            
+            // 5. ตรวจสอบสถานะการเข้าสู่ระบบ
+            auth.onAuthStateChanged(async user => {
+                if (user) {
+                    currentUser = user;
+                    // ดึงข้อมูลผู้ใช้จาก Firestore
+                    const userDoc = await usersCol.doc(user.uid).get();
+                    currentUserData = { id: userDoc.id, ...userDoc.data() };
+                    
+                    // หากผู้ใช้ยังไม่ได้รับการอนุมัติ และไม่ใช่แอดมิน ให้ออกไป
+                    if (!currentUserData.approved && user.email !== ADMIN_EMAIL) {
+                        await auth.signOut();
+                        showAlert('บัญชีของคุณยังไม่ได้รับการอนุมัติ กรุณารอการอนุมัติจากผู้ดูแล', 'danger');
+                        showLoading(false);
+                        return;
+                    }
+
+                    subscribeToData(); // เริ่มฟังการเปลี่ยนแปลงข้อมูล
+                    showMainScreen();
+                } else {
+                    currentUser = null;
+                    currentUserData = null;
+                    showAuthScreen();
+                    showLoading(false);
+                }
+            });
+            
+            // ไม่ต้องเรียก showLoading(false) ที่นี่ เพราะจะถูกเรียกใน onAuthStateChanged
+        }
+
+        // Element SDK-related functions (Removed or simplified as no longer necessary)
+        // ... (Keep the configuration for display, but remove SDK initialization)
+        document.getElementById('systemTitle').textContent = "ระบบเช็คเวลาเรียน";
+        document.getElementById('schoolName').textContent = "โรงเรียน";
+        
+        // UI Navigation helpers
+        function showAuthScreen() {
+            document.getElementById('mainScreen').classList.add('hidden');
+            document.getElementById('authScreen').classList.remove('hidden');
+        }
+
+        function showMainScreen() {
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('mainScreen').classList.remove('hidden');
+            
+            document.getElementById('welcomeText').textContent = `ยินดีต้อนรับ ${currentUserData.name}`;
+            document.getElementById('userRole').textContent = currentUser.email === ADMIN_EMAIL ? 'ผู้ดูแลระบบ' : 'นักเรียน';
+            
+            setupNavigation();
+            showLoading(false); // ซ่อน loading เมื่อเข้าสู่หน้าหลักสำเร็จ
+            updateDashboard(); // เรียก updateDashboard ครั้งแรก
+        }
+
+        function showAuthTab(tab) {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            
+            if (tab === 'login') {
+                document.querySelector('.nav-tab').classList.add('active');
+                document.getElementById('loginTab').classList.add('active');
+            } else {
+                document.querySelectorAll('.nav-tab')[1].classList.add('active');
+                document.getElementById('registerTab').classList.add('active');
+            }
+        }
+
+        // 6. Auth functions (ใช้ Firebase Authentication)
+        async function handleLogin(event) {
+            event.preventDefault();
+            showLoading(true);
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                // onAuthStateChanged จะจัดการการแสดงผล
+                showAlert('เข้าสู่ระบบสำเร็จ', 'success');
+            } catch (error) {
+                console.error('Login failed:', error);
+                showAlert('เข้าสู่ระบบไม่สำเร็จ: อีเมล/รหัสผ่านไม่ถูกต้อง หรือบัญชีรอการอนุมัติ', 'danger');
+                showLoading(false);
+            }
+        }
+
+        async function handleRegister(event) {
+            event.preventDefault();
+            showLoading(true);
+            
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            
+            try {
+                // 1. สร้างผู้ใช้ด้วย Firebase Auth
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+
+                // 2. สร้าง User Document ใน Firestore
+                const isApproved = email === ADMIN_EMAIL;
+                await usersCol.doc(user.uid).set({
+                    name: name,
+                    email: email,
+                    role: isApproved ? 'admin' : 'student',
+                    approved: isApproved,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                showAlert('สมัครสมาชิกสำเร็จ กรุณารอการอนุมัติจากผู้ดูแล', 'success');
+                document.getElementById('registerForm').reset();
+                showAuthTab('login');
+            } catch (error) {
+                console.error('Register error:', error);
+                let message = 'เกิดข้อผิดพลาดในการสมัครสมาชิก';
+                if (error.code === 'auth/email-already-in-use') {
+                    message = 'อีเมลนี้ถูกใช้งานแล้ว';
+                } else if (error.code === 'auth/weak-password') {
+                    message = 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';
+                }
+                showAlert(message, 'danger');
+            }
+            
+            showLoading(false);
+        }
+
+        async function logout() {
+            try {
+                await auth.signOut();
+                showAlert('ออกจากระบบสำเร็จ', 'info');
+                // onAuthStateChanged จะจัดการ UI
+            } catch (error) {
+                console.error('Logout error:', error);
+                showAlert('เกิดข้อผิดพลาดในการออกจากระบบ', 'danger');
+            }
+        }
+
+        // Main screen functions (remain largely the same, but use Firebase data structures)
+        function setupNavigation() {
+            const navTabs = document.getElementById('mainNavTabs');
+            
+            if (currentUser.email === ADMIN_EMAIL) {
+                // Admin navigation
+                navTabs.innerHTML = `
+                    <button class="nav-tab active" onclick="showMainTab('dashboard')">แดชบอร์ด</button>
+                    <button class="nav-tab" onclick="showMainTab('addLeave')">เพิ่มข้อมูลการลา</button>
+                    <button class="nav-tab" onclick="showMainTab('manageLeave')">จัดการข้อมูลการลา</button>
+                    <button class="nav-tab" onclick="showMainTab('adminUsers')">จัดการสมาชิก</button>
+                `;
+            } else {
+                // Student navigation
+                navTabs.innerHTML = `
+                    <button class="nav-tab active" onclick="showMainTab('dashboard')">แดชบอร์ด</button>
+                    <button class="nav-tab" onclick="showMainTab('addLeave')">เพิ่มข้อมูลการลา</button>
+                    <button class="nav-tab" onclick="showMainTab('manageLeave')">จัดการข้อมูลการลา</button>
+                `;
+            }
+        }
+
+        function showMainTab(tab) {
+            document.querySelectorAll('#mainNavTabs .nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            
+            const tabButton = Array.from(document.querySelectorAll('#mainNavTabs .nav-tab')).find(t => 
+                t.onclick.toString().includes(tab)
+            );
+            if (tabButton) tabButton.classList.add('active');
+            
+            document.getElementById(tab + 'Tab').classList.add('active');
+            
+            if (tab === 'dashboard') {
+                selectedUserId = null; // รีเซ็ตเมื่อกลับไปแดชบอร์ดตัวเอง
+                updateDashboard();
+            } else if (tab === 'addLeave') {
+                setupAddLeaveForm();
+            } else if (tab === 'manageLeave') {
+                selectedUserId = null; // รีเซ็ตเมื่อกลับไปจัดการการลาตัวเอง
+                updateLeaveHistory();
+            } else if (tab === 'adminUsers') {
+                updateUsersTable();
+            } else if (tab === 'adminUserDetail') {
+                updateUserDetail();
+            }
+        }
+
+        // Dashboard functions
+        function updateDashboard() {
+            // ใช้ currentUser.uid หรือ selectedUserId
+            const userId = selectedUserId || currentUser.uid;
+            const userLeaveRecords = allLeaveRecords.filter(record => record.userId === userId);
+            
+            // ... (Calculations remain the same)
+            const totalLeaveDays = userLeaveRecords.length;
+            const totalStudyDays = 20 * 5; // 20 weeks * 5 days
+            const attendanceDays = totalStudyDays - totalLeaveDays;
+            const attendanceRate = ((attendanceDays / totalStudyDays) * 100).toFixed(1);
+            
+            let totalPeriodsPerWeek = 0;
+            Object.values(subjects).forEach(subject => {
+                totalPeriodsPerWeek += subject.periods;
+            });
+            
+            const totalPeriods = totalPeriodsPerWeek * 20; // 20 weeks
+            const maxAllowedAbsence = Math.floor(totalPeriods * 0.2); // 20% absence allowed
+            
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <h3>${totalLeaveDays}</h3>
+                    <p>จำนวนวันที่ลา</p>
+                </div>
+                <div class="stat-card">
+                    <h3>${attendanceDays}</h3>
+                    <p>จำนวนวันที่เรียน</p>
+                </div>
+                <div class="stat-card">
+                    <h3>${attendanceRate}%</h3>
+                    <p>เปอร์เซ็นต์การเข้าเรียน</p>
+                </div>
+                <div class="stat-card">
+                    <h3>${maxAllowedAbsence}</h3>
+                    <p>จำนวนคาบที่สามารถลาได้</p>
+                </div>
+            `;
+            
+            updateSubjectStats(userId);
+        }
+
+        function updateSubjectStats(userId) {
+            // ... (Function body remains the same, using existing global data)
+            const userLeaveRecords = allLeaveRecords.filter(record => record.userId === userId);
+            const container = document.getElementById('subjectCardsContainer');
+            container.innerHTML = '';
+            
+            Object.entries(subjects).forEach(([code, subject]) => {
+                const subjectLeaves = userLeaveRecords.filter(record => 
+                    record.subjects && record.subjects.includes(code)
+                );
+                
+                const totalPeriods = subject.periods * 20; // 20 weeks
+                const maxAbsence = Math.floor(totalPeriods * 0.2); // 20% absence allowed
+                const currentAbsence = subjectLeaves.length;
+                const canAbsent = Math.max(0, maxAbsence - currentAbsence);
+                
+                let status, statusClass, cardClass;
+                if (currentAbsence > maxAbsence) {
+                    status = 'เกินกำหนด';
+                    statusClass = 'status-danger';
+                    cardClass = 'danger';
+                } else if (currentAbsence >= maxAbsence * 0.8) {
+                    status = 'ใกล้เกิน';
+                    statusClass = 'status-warning';
+                    cardClass = 'warning';
+                } else {
+                    status = 'ปกติ';
+                    statusClass = 'status-normal';
+                    cardClass = '';
+                }
+                
+                const card = document.createElement('div');
+                card.className = `subject-card ${cardClass}`;
+                card.innerHTML = `
+                    <div class="subject-header">
+                        <div class="subject-code">${code}</div>
+                    </div>
+                    <div class="subject-name">${subject.name}</div>
+                    <div class="subject-teacher">ครู: ${subject.teacher}</div>
+                    <div class="subject-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">${subject.periods}</div>
+                            <div class="stat-label">คาบ/สัปดาห์</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${currentAbsence}</div>
+                            <div class="stat-label">วันที่ลา</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${canAbsent}</div>
+                            <div class="stat-label">ลาได้อีก</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${subject.credits}</div>
+                            <div class="stat-label">หน่วยกิต</div>
+                        </div>
+                    </div>
+                    <div class="status-badge ${statusClass}">${status}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+
+        // Add leave functions
+        function setupAddLeaveForm() {
+            const dateInput = document.getElementById('leaveDate');
+            dateInput.removeEventListener('change', showSubjectsForDate); // ป้องกันการผูกซ้ำ
+            dateInput.addEventListener('change', showSubjectsForDate);
+            document.getElementById('subjectsOnDate').classList.add('hidden'); // ซ่อนค่าเดิมเมื่อเปิด tab
+            document.getElementById('addLeaveForm').reset();
+        }
+
+        function showSubjectsForDate() {
+            // ... (Function body remains the same)
+            const dateInput = document.getElementById('leaveDate');
+            const date = new Date(dateInput.value);
+            const dayOfWeek = date.getDay();
+            
+            const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            const dayName = dayNames[dayOfWeek];
+            
+            const subjectsContainer = document.getElementById('subjectsOnDate');
+            const subjectsList = document.getElementById('subjectsList');
+            
+            if (dayOfWeek === 0 || dayOfWeek === 6 || isNaN(date.getTime())) {
+                // Weekend or invalid date
+                subjectsContainer.classList.add('hidden');
+                return;
+            }
+            
+            const daySubjects = schedule[dayName] || [];
+            const uniqueSubjects = [...new Set(daySubjects)];
+            
+            if (uniqueSubjects.length > 0) {
+                subjectsList.innerHTML = uniqueSubjects.map(code => 
+                    `<span class="subject-item">${code} - ${subjects[code]?.name || code}</span>`
+                ).join('');
+                subjectsContainer.classList.remove('hidden');
+            } else {
+                subjectsContainer.classList.add('hidden');
+            }
+        }
+
+        async function handleAddLeave(event) {
+            event.preventDefault();
+            showLoading(true);
+            
+            const date = document.getElementById('leaveDate').value;
+            const reason = document.getElementById('leaveReason').value;
+            
+            if (!currentUser) {
+                showAlert('ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่', 'danger');
+                showLoading(false);
+                return;
+            }
+            
+            // ตรวจสอบการลาซ้ำในวันเดิม
+            const existingLeave = allLeaveRecords.find(record => 
+                record.userId === currentUser.uid && record.date === date
+            );
+            
+            if (existingLeave) {
+                showAlert('คุณได้ลาในวันนี้แล้ว ไม่สามารถลาซ้ำได้', 'danger');
+                showLoading(false);
+                return;
+            }
+            
+            const dateObj = new Date(date);
+            const dayOfWeek = dateObj.getDay();
+            const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            const dayName = dayNames[dayOfWeek];
+            
+            const daySubjects = schedule[dayName] || [];
+            const uniqueSubjects = [...new Set(daySubjects)];
+            
+            const newLeave = {
+                userId: currentUser.uid,
+                userName: currentUserData.name, // เก็บชื่อไว้ด้วยเพื่อความสะดวก
+                date: date,
+                reason: reason,
+                subjects: uniqueSubjects.join(','),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            console.log('Creating leave record:', newLeave);
+            
+            try {
+                // 7. บันทึกข้อมูลการลาไปที่ Firestore
+                await leavesCol.add(newLeave);
+                
+                showAlert('บันทึกข้อมูลการลาสำเร็จ', 'success');
+                document.getElementById('addLeaveForm').reset();
+                document.getElementById('subjectsOnDate').classList.add('hidden');
+            } catch (error) {
+                console.error('Add leave error:', error);
+                showAlert('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + error.message, 'danger');
+            }
+            
+            showLoading(false);
+        }
+
+        // Manage leave functions
+        function updateLeaveHistory() {
+            // ใช้ currentUser.uid หรือ selectedUserId
+            const userId = selectedUserId || currentUser.uid;
+            const userLeaveRecords = allLeaveRecords.filter(record => record.userId === userId).sort((a, b) => new Date(b.date) - new Date(a.date));
+            const tbody = document.querySelector('#leaveHistoryTable tbody');
+            const mobileContainer = document.getElementById('leaveHistoryMobile');
+            
+            tbody.innerHTML = '';
+            mobileContainer.innerHTML = '';
+            
+            // ... (Empty state logic remains the same)
+            if (userLeaveRecords.length === 0) {
+                 const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="4" style="text-align: center; padding: 40px; color: #6b7280;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📝</div>
+                        <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">ยังไม่มีข้อมูลการลา</div>
+                        <div style="font-size: 14px;">เมื่อคุณลาเรียน ข้อมูลจะแสดงที่นี่</div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+                
+                const mobileEmpty = document.createElement('div');
+                mobileEmpty.className = 'mobile-card';
+                mobileEmpty.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #6b7280;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📝</div>
+                        <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">ยังไม่มีข้อมูลการลา</div>
+                        <div style="font-size: 14px;">เมื่อคุณลาเรียน ข้อมูลจะแสดงที่นี่</div>
+                    </div>
+                `;
+                mobileContainer.appendChild(mobileEmpty);
+                return;
+            }
+            
+            userLeaveRecords.forEach(record => {
+                const subjectNames = record.subjects ? record.subjects.split(',').map(code => 
+                    subjects[code] ? subjects[code].name : code
+                ).join(', ') : '';
+                
+                // ใช้ record.id เป็น LeaveId
+                const leaveId = record.id; 
+                // สามารถลบได้เสมอหากดูข้อมูลการลาของตัวเอง หรือเป็นแอดมิน
+                const canEdit = !selectedUserId || currentUser.email === ADMIN_EMAIL; 
+                
+                // Desktop table row
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${new Date(record.date).toLocaleDateString('th-TH')}</td>
+                    <td><span style="padding: 4px 12px; background: #f3f4f6; border-radius: 12px; font-size: 14px;">${record.reason}</span></td>
+                    <td style="font-size: 14px; color: #4b5563;">${subjectNames}</td>
+                    <td>
+                        ${canEdit ? `<button class="btn btn-danger btn-sm" onclick="deleteLeave('${leaveId}')" style="padding: 6px 12px; font-size: 12px;">🗑️ ลบ</button>` : '-'}
+                    </td>
+                `;
+                tbody.appendChild(row);
+                
+                // Mobile card
+                const mobileCard = document.createElement('div');
+                mobileCard.className = 'mobile-card';
+                mobileCard.innerHTML = `
+                    <div class="mobile-card-header">
+                        <div class="mobile-card-title">📅 ${new Date(record.date).toLocaleDateString('th-TH')}</div>
+                        <span style="padding: 4px 12px; background: #f3f4f6; border-radius: 12px; font-size: 12px; color: #4b5563;">${record.reason}</span>
+                    </div>
+                    <div class="mobile-card-content">
+                        <div class="mobile-card-row">
+                            <div class="mobile-card-label">📚 วิชาที่เรียน:</div>
+                            <div class="mobile-card-value">${subjectNames}</div>
+                        </div>
+                    </div>
+                    ${canEdit ? `
+                        <div class="mobile-actions">
+                            <button class="btn btn-danger btn-sm" onclick="deleteLeave('${leaveId}')">🗑️ ลบ</button>
+                        </div>
+                    ` : ''}
+                `;
+                mobileContainer.appendChild(mobileCard);
+            });
+        }
+
+        async function deleteLeave(leaveId) {
+            // สร้าง inline confirmation
+            const event = window.event;
+            const confirmButton = event.target;
+            const originalText = confirmButton.textContent;
+            const originalClass = confirmButton.className;
+            
+            // ... (Inline confirmation logic remains the same)
+            confirmButton.textContent = '❓ ยืนยันลบ?';
+            confirmButton.className = 'btn btn-warning btn-sm';
+            
+            // สร้างปุ่มยกเลิก
+            const cancelButton = document.createElement('button');
+            cancelButton.textContent = '❌ ยกเลิก';
+            cancelButton.className = 'btn btn-secondary btn-sm';
+            cancelButton.style.marginLeft = '8px';
+            
+            confirmButton.parentNode.insertBefore(cancelButton, confirmButton.nextSibling);
+            
+            // Event listeners
+            const handleConfirm = async () => {
+                cleanup();
+                showLoading(true);
+                
+                try {
+                    // 8. ลบข้อมูลจาก Firestore
+                    await leavesCol.doc(leaveId).delete();
+                    showAlert('ลบข้อมูลการลาสำเร็จ', 'success');
+                } catch (error) {
+                    console.error('Delete leave failed:', error);
+                    showAlert('เกิดข้อผิดพลาดในการลบข้อมูล: ' + error.message, 'danger');
+                }
+                
+                showLoading(false);
+            };
+            
+            const handleCancel = () => {
+                cleanup();
+            };
+            
+            const cleanup = () => {
+                confirmButton.textContent = originalText;
+                confirmButton.className = originalClass;
+                cancelButton.remove();
+                confirmButton.removeEventListener('click', handleConfirm);
+                cancelButton.removeEventListener('click', handleCancel);
+            };
+            
+            confirmButton.addEventListener('click', handleConfirm);
+            cancelButton.addEventListener('click', handleCancel);
+            
+            // Auto-cancel after 5 seconds
+            setTimeout(cleanup, 5000);
+        }
+
+        // Admin functions
+        function updateUsersTable() {
+            // กรองผู้ใช้เพื่อให้ Admin Email อยู่บนสุด และผู้ใช้ที่รออนุมัติอยู่ถัดไป
+            const sortedUsers = allUsersData.slice().sort((a, b) => {
+                if (a.email === ADMIN_EMAIL) return -1;
+                if (b.email === ADMIN_EMAIL) return 1;
+                if (!a.approved && b.approved) return -1;
+                if (a.approved && !b.approved) return 1;
+                return 0;
+            });
+
+            const tbody = document.querySelector('#usersTable tbody');
+            const mobileContainer = document.getElementById('usersMobile');
+            
+            tbody.innerHTML = '';
+            mobileContainer.innerHTML = '';
+            
+            // ... (Empty state logic remains the same)
+            if (sortedUsers.length === 0) {
+                 const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="4" style="text-align: center; padding: 40px; color: #6b7280;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">👥</div>
+                        <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">ยังไม่มีสมาชิก</div>
+                        <div style="font-size: 14px;">เมื่อมีการสมัครสมาชิก ข้อมูลจะแสดงที่นี่</div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+                
+                const mobileEmpty = document.createElement('div');
+                mobileEmpty.className = 'mobile-card';
+                mobileEmpty.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #6b7280;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">👥</div>
+                        <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">ยังไม่มีสมาชิก</div>
+                        <div style="font-size: 14px;">เมื่อมีการสมัครสมาชิก ข้อมูลจะแสดงที่นี่</div>
+                    </div>
+                `;
+                mobileContainer.appendChild(mobileEmpty);
+                return;
+            }
+            
+            sortedUsers.forEach(user => {
+                const isAdmin = user.email === ADMIN_EMAIL;
+                const statusBadge = user.approved ? 
+                    '<span style="padding: 4px 12px; background: #dcfce7; color: #166534; border-radius: 12px; font-size: 12px; font-weight: 600;">✅ อนุมัติแล้ว</span>' : 
+                    '<span style="padding: 4px 12px; background: #fef3c7; color: #92400e; border-radius: 12px; font-size: 12px; font-weight: 600;">⏳ รออนุมัติ</span>';
+                
+                // ใช้ user.id เป็น userId
+                const userId = user.id; 
+                
+                // Desktop table row
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            ${isAdmin ? '👑' : '👤'} ${user.name}
+                            ${isAdmin ? '<span style="font-size: 12px; color: #3b82f6; font-weight: 600;">(ผู้ดูแล)</span>' : ''}
+                        </div>
+                    </td>
+                    <td style="color: #4b5563;">${user.email}</td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button class="btn btn-primary btn-sm" onclick="viewUserDetail('${userId}')" style="padding: 6px 12px; font-size: 12px;">👁️ ดูรายละเอียด</button>
+                            ${!user.approved ? `<button class="btn btn-success btn-sm" onclick="approveUser('${userId}')" style="padding: 6px 12px; font-size: 12px;">✅ อนุมัติ</button>` : ''}
+                            ${!isAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${userId}')" style="padding: 6px 12px; font-size: 12px;">🗑️ ลบ</button>` : ''}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+                
+                // Mobile card
+                const mobileCard = document.createElement('div');
+                mobileCard.className = 'mobile-card';
+                mobileCard.innerHTML = `
+                    <div class="mobile-card-header">
+                        <div class="mobile-card-title">
+                            ${isAdmin ? '👑' : '👤'} ${user.name}
+                            ${isAdmin ? '<span style="font-size: 12px; color: #3b82f6; font-weight: 600; margin-left: 8px;">(ผู้ดูแล)</span>' : ''}
+                        </div>
+                        ${statusBadge}
+                    </div>
+                    <div class="mobile-card-content">
+                        <div class="mobile-card-row">
+                            <div class="mobile-card-label">📧 อีเมล:</div>
+                            <div class="mobile-card-value">${user.email}</div>
+                        </div>
+                    </div>
+                    <div class="mobile-actions">
+                        <button class="btn btn-primary btn-sm" onclick="viewUserDetail('${userId}')">👁️ ดูรายละเอียด</button>
+                        ${!user.approved ? `<button class="btn btn-success btn-sm" onclick="approveUser('${userId}')">✅ อนุมัติ</button>` : ''}
+                        ${!isAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${userId}')">🗑️ ลบ</button>` : ''}
+                    </div>
+                `;
+                mobileContainer.appendChild(mobileCard);
+            });
+        }
+
+        function viewUserDetail(userId) {
+            selectedUserId = userId;
+            const user = allUsersData.find(u => u.id === userId);
+            document.getElementById('userDetailName').textContent = `รายละเอียด: ${user.name}`;
+            showMainTab('adminUserDetail');
+        }
+
+        function updateUserDetail() {
+            if (!selectedUserId) return;
+            
+            const user = allUsersData.find(u => u.id === selectedUserId);
+            // ... (Statistics and table generation logic remains the same, using selectedUserId)
+            const userLeaveRecords = allLeaveRecords.filter(record => record.userId === selectedUserId).sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            const totalLeaveDays = userLeaveRecords.length;
+            const totalStudyDays = 20 * 5;
+            const attendanceDays = totalStudyDays - totalLeaveDays;
+            const attendanceRate = ((attendanceDays / totalStudyDays) * 100).toFixed(1);
+            
+            const statsContainer = document.getElementById('userDetailStats');
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <h3>${totalLeaveDays}</h3>
+                    <p>จำนวนวันที่ลา</p>
+                </div>
+                <div class="stat-card">
+                    <h3>${attendanceDays}</h3>
+                    <p>จำนวนวันที่เรียน</p>
+                </div>
+                <div class="stat-card">
+                    <h3>${attendanceRate}%</h3>
+                    <p>เปอร์เซ็นต์การเข้าเรียน</p>
+                </div>
+            `;
+            
+            const tbody = document.querySelector('#userDetailLeaveTable tbody');
+            const mobileContainer = document.getElementById('userDetailLeaveMobile');
+            
+            tbody.innerHTML = '';
+            mobileContainer.innerHTML = '';
+            
+            if (userLeaveRecords.length === 0) {
+                 const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="4" style="text-align: center; padding: 40px; color: #6b7280;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📝</div>
+                        <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">ยังไม่มีข้อมูลการลา</div>
+                        <div style="font-size: 14px;">นักเรียนคนนี้ยังไม่เคยลาเรียน</div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+                
+                const mobileEmpty = document.createElement('div');
+                mobileEmpty.className = 'mobile-card';
+                mobileEmpty.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #6b7280;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📝</div>
+                        <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">ยังไม่มีข้อมูลการลา</div>
+                        <div style="font-size: 14px;">นักเรียนคนนี้ยังไม่เคยลาเรียน</div>
+                    </div>
+                `;
+                mobileContainer.appendChild(mobileEmpty);
+                return;
+            }
+            
+            userLeaveRecords.forEach(record => {
+                const subjectNames = record.subjects ? record.subjects.split(',').map(code => 
+                    subjects[code] ? subjects[code].name : code
+                ).join(', ') : '';
+                
+                const leaveId = record.id;
+                
+                // Desktop table row
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${new Date(record.date).toLocaleDateString('th-TH')}</td>
+                    <td><span style="padding: 4px 12px; background: #f3f4f6; border-radius: 12px; font-size: 14px;">${record.reason}</span></td>
+                    <td style="font-size: 14px; color: #4b5563;">${subjectNames}</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm" onclick="deleteLeave('${leaveId}')" style="padding: 6px 12px; font-size: 12px;">🗑️ ลบ</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+                
+                // Mobile card
+                const mobileCard = document.createElement('div');
+                mobileCard.className = 'mobile-card';
+                mobileCard.innerHTML = `
+                    <div class="mobile-card-header">
+                        <div class="mobile-card-title">📅 ${new Date(record.date).toLocaleDateString('th-TH')}</div>
+                        <span style="padding: 4px 12px; background: #f3f4f6; border-radius: 12px; font-size: 12px; color: #4b5563;">${record.reason}</span>
+                    </div>
+                    <div class="mobile-card-content">
+                        <div class="mobile-card-row">
+                            <div class="mobile-card-label">📚 วิชาที่เรียน:</div>
+                            <div class="mobile-card-value">${subjectNames}</div>
+                        </div>
+                    </div>
+                    <div class="mobile-actions">
+                        <button class="btn btn-danger btn-sm" onclick="deleteLeave('${leaveId}')">🗑️ ลบ</button>
+                    </div>
+                `;
+                mobileContainer.appendChild(mobileCard);
+            });
+            updateSubjectStats(selectedUserId); // แสดงสถิติรายวิชาของผู้ใช้ที่ถูกเลือก
+        }
+
+        async function approveUser(userId) {
+            showLoading(true);
+            
+            try {
+                // 9. อัพเดทสถานะผู้ใช้ใน Firestore
+                await usersCol.doc(userId).update({ approved: true });
+                showAlert('อนุมัติผู้ใช้สำเร็จ', 'success');
+            } catch (error) {
+                console.error('Approve user failed:', error);
+                showAlert('เกิดข้อผิดพลาดในการอนุมัติ: ' + error.message, 'danger');
+            }
+            
+            showLoading(false);
+        }
+
+        async function deleteUser(userId) {
+            // สร้าง inline confirmation
+            const event = window.event;
+            const confirmButton = event.target;
+            const originalText = confirmButton.textContent;
+            const originalClass = confirmButton.className;
+            
+            // ... (Inline confirmation logic remains the same)
+            confirmButton.textContent = '❓ ยืนยันลบ?';
+            confirmButton.className = 'btn btn-warning btn-sm';
+            
+            // สร้างปุ่มยกเลิก
+            const cancelButton = document.createElement('button');
+            cancelButton.textContent = '❌ ยกเลิก';
+            cancelButton.className = 'btn btn-secondary btn-sm';
+            cancelButton.style.marginLeft = '8px';
+            
+            confirmButton.parentNode.insertBefore(cancelButton, confirmButton.nextSibling);
+            
+            // Event listeners
+            const handleConfirm = async () => {
+                cleanup();
+                showLoading(true);
+                
+                try {
+                    // 10. ลบ User Document ใน Firestore
+                    await usersCol.doc(userId).delete();
+                    
+                    // 11. **(สำคัญ)** ต้องลบบัญชีผู้ใช้ใน Firebase Auth ด้วย (ฟังก์ชันนี้ควรทำบน Server/Cloud Functions)
+                    // เนื่องจาก Security Rules ของ Firebase ไม่อนุญาตให้ client ลบบัญชีอื่น
+                    // **NOTE:** ในโค้ดนี้ ลบแค่ Firestore Document ซึ่งหมายความว่า บัญชีใน Auth จะยังอยู่
+                    // หากต้องการลบบัญชีใน Auth ด้วย ต้องใช้ Cloud Functions/Admin SDK
+                    
+                    // ลบข้อมูลการลาของผู้ใช้คนนี้ด้วย
+                    const batch = db.batch();
+                    const userLeaves = allLeaveRecords.filter(record => record.userId === userId);
+                    userLeaves.forEach(record => {
+                        batch.delete(leavesCol.doc(record.id));
+                    });
+                    await batch.commit();
+                    
+                    showAlert('ลบผู้ใช้และข้อมูลการลาสำเร็จ', 'success');
+                } catch (error) {
+                    console.error('Delete user failed:', error);
+                    showAlert('เกิดข้อผิดพลาดในการลบผู้ใช้: ' + error.message, 'danger');
+                }
+                
+                showLoading(false);
+            };
+            
+            const handleCancel = () => {
+                cleanup();
+            };
+            
+            const cleanup = () => {
+                confirmButton.textContent = originalText;
+                confirmButton.className = originalClass;
+                cancelButton.remove();
+                confirmButton.removeEventListener('click', handleConfirm);
+                cancelButton.removeEventListener('click', handleCancel);
+            };
+            
+            confirmButton.addEventListener('click', handleConfirm);
+            cancelButton.addEventListener('click', handleCancel);
+            
+            // Auto-cancel after 5 seconds
+            setTimeout(cleanup, 5000);
+        }
+
+        // Utility functions
+        function showLoading(show) {
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (show) {
+                loadingScreen.classList.remove('hidden');
+            } else {
+                loadingScreen.classList.add('hidden');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        function updateUI() {
+            // ฟังก์ชันนี้จะถูกเรียกเมื่อข้อมูล Firestore มีการเปลี่ยนแปลง
+            if (currentUser) {
+                // Update UI based on the active tab
+                const activeTab = document.querySelector('#mainScreen .tab-content.active');
+                if (activeTab) {
+                    const tabId = activeTab.id;
+                    if (tabId === 'dashboardTab') updateDashboard();
+                    else if (tabId === 'manageLeaveTab') updateLeaveHistory();
+                    else if (tabId === 'adminUsersTab') updateUsersTable();
+                    else if (tabId === 'adminUserDetailTab') updateUserDetail();
+                } else {
+                    // หากไม่มี Tab Active ให้เรียก Dashboard เป็นค่าเริ่มต้น
+                    updateDashboard();
+                }
+            }
+        }
+
+        // Event listeners
+        document.getElementById('loginForm').addEventListener('submit', handleLogin);
+        document.getElementById('registerForm').addEventListener('submit', handleRegister);
+        document.getElementById('addLeaveForm').addEventListener('submit', handleAddLeave);
+
+        // Initialize app when page loads
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+ </body>
+</html>
